@@ -26,10 +26,19 @@ const adapter = new JSONFile('db.json');
 const defaultData = { subscriptions: [] };
 const db = new Low(adapter, defaultData);
 
+async function initDb() {
+  await db.read();
+  _.defaultsDeep(db.data, defaultData);
+  await db.write();
+}
+
+async function addSubscription(sub) {
+  db.data.subscriptions.push(sub);
+  await db.write();
+}
+
 async function main() {
-	await db.read();
-	_.defaultsDeep(db.data, defaultData);
-	await db.write();
+        await initDb();
 
 	// === Telegram Bot Handlers
 	bot.onText(/\/start/, (msg) => {
@@ -55,20 +64,18 @@ async function main() {
 		bot.sendMessage(msg.chat.id, `Похожие станции:\n${stations.join('\n')}`);
 	});
 
-	bot.onText(/\/subscribe (.+)/, async (msg, match) => {
-		const args = match[1].split(',');
-		const [from, to, date, placeType] = args.map(s => s.trim());
-		db.data.subscriptions.push({ chat_id: msg.chat.id, from, to, date, placeType });
-		await db.write();
-		bot.sendMessage(msg.chat.id, `Подписка оформлена: ${from} → ${to} на ${date} (${placeType})`);
-	});
+        bot.onText(/\/subscribe (.+)/, async (msg, match) => {
+                const args = match[1].split(',');
+                const [from, to, date, placeType] = args.map(s => s.trim());
+                await addSubscription({ chat_id: msg.chat.id, from, to, date, placeType });
+                bot.sendMessage(msg.chat.id, `Подписка оформлена: ${from} → ${to} на ${date} (${placeType})`);
+        });
 
-	app.post('/subscribe', async (req, res) => {
-		const { chat_id, from, to, date, placeType } = req.body;
-		db.data.subscriptions.push({ chat_id, from, to, date, placeType });
-		await db.write();
-		res.send({ status: 'ok' });
-	});
+        app.post('/subscribe', async (req, res) => {
+                const { chat_id, from, to, date, placeType } = req.body;
+                await addSubscription({ chat_id, from, to, date, placeType });
+                res.send({ status: 'ok' });
+        });
 
 	async function checkPlaces() {
 		for (const sub of db.data.subscriptions) {
@@ -79,11 +86,22 @@ async function main() {
 		}
 	}
 
-	schedule.scheduleJob('*/5 * * * *', checkPlaces);
 
-	app.get('/', (req, res) => {
-		res.sendFile(path.join(__dirname, 'public', 'index.html'));
-	});
+        schedule.scheduleJob('*/5 * * * *', checkPlaces);
+
+        app.get('/api/subscriptions', async (_req, res) => {
+                await db.read();
+                res.json(db.data.subscriptions);
+        });
+
+
+        app.get('/', (req, res) => {
+                res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        });
+
+        app.get('/subscriptions', (req, res) => {
+                res.sendFile(path.join(__dirname, 'public', 'subscriptions.html'));
+        });
 
 	app.listen(3000, () => {
 		console.log('✅ WebApp running on http://localhost:3000');
