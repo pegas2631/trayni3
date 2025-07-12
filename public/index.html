@@ -2,60 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Подписка на поезд</title>
-    <link rel="stylesheet" href="styles.css">
+<title>Подписка на поезд</title>
+<link rel="stylesheet" href="styles.css">
     <script>
-		async function suggestStations(query, field) {
-			if (query.length < 2) return;
-			const res = await fetch(`https://suggests.rasp.yandex.net/all_suggests?format=json&part=${encodeURIComponent(query)}`);
-			const data = await res.json();
-			const list = data.segments.slice(0, 5).map(s => s.title);
-			const datalist = document.getElementById(`${field}-list`);
-			datalist.innerHTML = list.map(x => `<option value="${x}">`).join('');
-		}
+        async function suggestStations(query, field) {
+            if (query.length < 2) return;
+            const res = await fetch(`https://suggests.rasp.yandex.net/all_suggests?format=json&part=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            const list = data.segments.slice(0, 5).map(s => s.title);
+            const datalist = document.getElementById(`${field}-list`);
+            datalist.innerHTML = list.map(x => `<option value="${x}">`).join('');
+        }
 
-		async function sendSubscription() {
-			const from = document.getElementById("from").value;
-			const to = document.getElementById("to").value;
-			const date = document.getElementById("date").value;
-			const placeType = document.getElementById("placeType").value;
+        async function sendSubscription() {
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const date = document.getElementById('date').value;
 
-			const tg = window.Telegram.WebApp;
-			const payload = { from, to, date, placeType, chat_id: tg.initDataUnsafe.user.id };
+            const tg = window.Telegram.WebApp;
+            const payload = {
+                from,
+                to,
+                date,
+                placeType: 'купе',
+                chat_id: tg.initDataUnsafe.user.id
+            };
 
-			await fetch('/subscribe', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
+            await fetch('/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-			tg.close();
-		}
+            tg.close();
+        }
     </script>
 </head>
 <body>
-<h2>Подписка на поезд 123</h2>
-<label>Откуда:
-    <input id="from" list="from-list" oninput="suggestStations(this.value, 'from')">
-    <datalist id="from-list"></datalist>
-</label><br><br>
+    <div class="card">
+        <h2>Подписка на поезд 123</h2>
+        <label>Откуда
+            <input id="from" list="from-list" oninput="suggestStations(this.value, 'from')">
+            <datalist id="from-list"></datalist>
+        </label>
 
-<label>Куда:
-    <input id="to" list="to-list" oninput="suggestStations(this.value, 'to')">
-    <datalist id="to-list"></datalist>
-</label><br><br>
+        <label>Куда
+            <input id="to" list="to-list" oninput="suggestStations(this.value, 'to')">
+            <datalist id="to-list"></datalist>
+        </label>
 
-<label>Дата:
-    <input id="date" type="date">
-</label><br><br>
+        <label>Дата
+            <input id="date" type="date">
+        </label>
 
-<label>Тип места:
-    <select id="placeType">
-        <option value="купе">Купе</option>
-        <option value="плацкарт">Плацкарт</option>
-    </select>
-</label><br><br>
-
-<button onclick="sendSubscription()">Подписаться</button>
+        <button onclick="sendSubscription()">Subscribe</button>
+    </div>
 </body>
 </html>
