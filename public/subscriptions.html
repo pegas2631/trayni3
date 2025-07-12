@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мои подписки</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        async function load() {
+            const res = await fetch('/api/subscriptions');
+            const data = await res.json();
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.from}</td>
+                    <td>${s.to}</td>
+                    <td>${s.date}</td>
+                    <td>${s.placeType}</td>
+                </tr>
+            `).join('');
+        }
+        window.addEventListener('DOMContentLoaded', load);
+    </script>
+</head>
+<body>
+<h2>Оформленные подписки</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Откуда</th>
+            <th>Куда</th>
+            <th>Дата</th>
+            <th>Тип места</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+</body>
+</html>
